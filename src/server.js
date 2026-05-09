@@ -1,7 +1,7 @@
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import dns from 'dns';
 import app from './app.js';
+import { startMongo } from './db.js';
 
 dotenv.config();
 
@@ -17,24 +17,22 @@ if (!MONGO_URI) {
   process.exit(1);
 }
 
-// Abrir el puerto primero: Render hace health checks al PORT; si solo escuchas
-// después de Mongo, el proceso puede recibir SIGTERM y salir con 1 sin ver el catch.
-console.log('[boot] binding HTTP server…');
+console.log('[boot] binding HTTP server + starting MongoDB…');
+
+const mongoPromise = startMongo(MONGO_URI);
 
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
-  console.log('[boot] connecting to MongoDB…');
-
-  mongoose
-    .connect(MONGO_URI, { serverSelectionTimeoutMS: 20000 })
-    .then(() => console.log('Connected to MongoDB Atlas'))
-    .catch((err) => {
-      console.error('MongoDB connection error');
-      console.error('Message:', err?.message || err);
-      if (err?.reason) console.error('Reason:', err.reason);
-      console.error(
-        'Hints: (1) Atlas → Network Access → add 0.0.0.0/0. (2) User/password correct; special chars in password must be URL-encoded in the URI. (3) Database user has read/write on the cluster.'
-      );
-      server.close(() => process.exit(1));
-    });
 });
+
+mongoPromise
+  .then(() => console.log('Connected to MongoDB Atlas'))
+  .catch((err) => {
+    console.error('MongoDB connection error');
+    console.error('Message:', err?.message || err);
+    if (err?.reason) console.error('Reason:', err.reason);
+    console.error(
+      'Hints: (1) Atlas → Network Access → add 0.0.0.0/0. (2) User/password correct; special chars in password must be URL-encoded in the URI. (3) MONGO_URI path should include my_cloud_database. (4) Database user has read/write on the cluster.'
+    );
+    server.close(() => process.exit(1));
+  });
