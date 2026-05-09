@@ -9,9 +9,11 @@ export function startMongo(uri) {
     if (!uri) {
       throw new Error('MONGO_URI is required to connect');
     }
-    mongoPromise = mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 25000
-    });
+    const options = { serverSelectionTimeoutMS: 25000 };
+    if (process.env.MONGO_DB_NAME) {
+      options.dbName = process.env.MONGO_DB_NAME;
+    }
+    mongoPromise = mongoose.connect(uri, options);
   }
   return mongoPromise;
 }
