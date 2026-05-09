@@ -17,7 +17,9 @@ if (!MONGO_URI) {
   process.exit(1);
 }
 
-mongoose.connect(MONGO_URI)
+console.log('[boot] connecting to MongoDB…');
+
+mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 15000 })
   .then(() => {
     console.log('Connected to MongoDB Atlas');
     app.listen(PORT, '0.0.0.0', () => {
@@ -25,6 +27,11 @@ mongoose.connect(MONGO_URI)
     });
   })
   .catch((err) => {
-    console.error('MongoDB connection error:', err);
+    console.error('MongoDB connection error');
+    console.error('Message:', err?.message || err);
+    if (err?.reason) console.error('Reason:', err.reason);
+    console.error(
+      'Hints: (1) Atlas → Network Access → add 0.0.0.0/0. (2) User/password correct; special chars in password must be URL-encoded in the URI. (3) Database user has read/write on the cluster.'
+    );
     process.exit(1);
   });
