@@ -8,10 +8,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get('/', (req, res) => {
-  res.json({
-    message: 'Users API',
-    users: '/api/users'
-  });
+  res.redirect(302, '/api/users');
 });
 
 app.use('/api/users', userRoutes);
